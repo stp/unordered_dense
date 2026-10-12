@@ -1876,6 +1876,15 @@ public:
         return m_buckets.size();
     }
 
+    // STP's hash-cons tables need to know whether the next insert can rebuild
+    // the bucket array. Expose the container's already-computed integral
+    // threshold so callers never reconstruct it through the floating
+    // load-factor API.
+    [[nodiscard]] auto stp_insertion_may_rehash() const noexcept -> bool {
+        return 0 == bucket_count() ||
+               size() >= static_cast<size_t>(m_max_bucket_capacity);
+    }
+
     static constexpr auto max_bucket_count() noexcept -> size_t { // NOLINT(modernize-use-nodiscard)
         return max_size();
     }
