@@ -1744,6 +1744,22 @@ public:
     void swap(table& other) noexcept(noexcept(std::is_nothrow_swappable_v<value_container_type> &&
                                               std::is_nothrow_swappable_v<Hash> && std::is_nothrow_swappable_v<KeyEqual>)) {
         using std::swap;
+        if (get_allocator() == other.get_allocator()) {
+            // Swapping the table object through std::swap selects the generic
+            // move-construction path. table's move assignment reinitializes
+            // the moved-from bucket array, which allocates and can therefore
+            // terminate inside this noexcept function. Swap the complete
+            // representation directly when the allocators agree; this is the
+            // ordinary/default-allocator case and performs no allocation.
+            swap(m_values, other.m_values);
+            swap(m_buckets, other.m_buckets);
+            swap(m_max_bucket_capacity, other.m_max_bucket_capacity);
+            swap(m_max_load_factor, other.m_max_load_factor);
+            swap(m_hash, other.m_hash);
+            swap(m_equal, other.m_equal);
+            swap(m_shifts, other.m_shifts);
+            return;
+        }
         swap(other, *this);
     }
 
